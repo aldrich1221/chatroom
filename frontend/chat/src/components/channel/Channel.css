@@ -1,0 +1,43 @@
+/* Channel.css */
+
+.chat-room-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
+  
+  .channel-name {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+  
+  .message-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+  
+  .message-item {
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .my-message {
+    background-color: #e0ffe0; /* Light green background for messages from 'You' */
+  }
+  
+  .input-container {
+    display: flex;
+  }
+  
+  input[type="text"] {
+    flex: 1;
+    padding: 10px;
+  }
+  
+  button {
+    padding: 10px;
+  }
+  
