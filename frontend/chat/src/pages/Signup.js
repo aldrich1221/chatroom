@@ -1,19 +1,32 @@
-// src/components/Signup.js
 import React, { useState } from "react";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { auth } from '../Services/FireBase.js';
+import axios from 'axios'; // Import axios for making HTTP requests
 
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [userName, setUserName] = useState(""); // Added userName state
   const navigate = useNavigate();
-//   const auth = getAuth();
-
+  const auth = getAuth();
+  const backendUrl = 'http://localhost:5000';
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Use environment variable for the backend URL
+ 
+
+      // Save user info to the backend
+      console.log("send signup..", user, userName);
+      await axios.post(`${backendUrl}/users/signup`, {
+        uid: user.uid,
+        email: user.email,
+        userName: userName
+      });
+
       navigate("/chatroom");
     } catch (error) {
       alert(error.message);
@@ -24,6 +37,12 @@ const Signup = () => {
     <div>
       <h2>Signup</h2>
       <form onSubmit={handleSignup}>
+        <input
+          type="text"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          placeholder="Username"
+        />
         <input
           type="email"
           value={email}

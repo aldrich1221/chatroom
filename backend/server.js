@@ -1,18 +1,21 @@
-// server.js
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-
 const cors = require('cors');
+const dotenv = require('dotenv');
+const roomRoutes = require('./routes/rooms');
+const userRoutes = require('./routes/users');
+const messageRoutes = require('./routes/messages');
+const MessageData = require('./models/MessageData');
+// Load environment variables from .env file
+dotenv.config();
+
 const app = express();
-
-// app.use(cors()); // This will allow all origins by default
-// app.use(cors({ origin: 'http://localhost:3000' }));
 const server = http.createServer(app);
-// const io = socketIo(server);
 
+// Set up CORS
 const io = socketIo(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -20,42 +23,49 @@ const io = socketIo(server, {
   }
 });
 
+// Middleware
 app.use(cors());
 app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(express.json());
 
-// In-memory store for message history by room ID
-const messageHistoryByRoom = {};
+// Connect to MongoDB
+const mongoURI = process.env.MONGO_URI;
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('MongoDB connection error:', err));
 
-app.get('/messages/:roomId', (req, res) => {
-  const { roomId } = req.params;
-  res.json(messageHistoryByRoom[roomId] || []);
-});
-app.get('/test', (req, res) => {
-  
-  res.json("test ok!");
-});
+// Route handlers
+app.use('/rooms', roomRoutes);
+app.use('/users', userRoutes);
+app.use('/messages', messageRoutes);
 
+// WebSocket connection handler
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  socket.on('joinRoom', (roomId) => {
+  socket.on('joinRoom', async (roomId) => {
     socket.join(roomId);
     console.log(`User joined room ${roomId}`);
 
-    // Send message history to the newly connected client
-    socket.emit('loadMessages', messageHistoryByRoom[roomId] || []);
+    try {
+      const messages = await MessageData.find({ roomId }).sort({ timestamp: 1 }).exec();
+      socket.emit('loadMessages', messages);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    }
   });
 
-  socket.on('message', ({ roomId, message }) => {
+  socket.on('message', async ({ roomId, message, senderId }) => {
     console.log(`Message received in room ${roomId}: `, message);
-    if (!messageHistoryByRoom[roomId]) {
-      messageHistoryByRoom[roomId] = [];
+
+    const newMessage = new MessageData({ roomId, message, senderId });
+    try {
+      await newMessage.save();
+      io.to(roomId).emit('message', { message, senderId });
+    } catch (error) {
+      console.error('Error saving message:', error);
     }
-    console.log("GET Message..",roomId,message)
-    messageHistoryByRoom[roomId].push(message); // Store message in history
-    io.to(roomId).emit('message', message); // Broadcast message to all clients in the room
   });
 
   socket.on('disconnect', () => {
@@ -63,6 +73,7 @@ io.on('connection', (socket) => {
   });
 });
 
+// Start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

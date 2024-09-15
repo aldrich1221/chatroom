@@ -1,86 +1,68 @@
+// src/components/ChatRoom.js
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, query, orderBy, onSnapshot } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import UserInfo from '../components/UserInfo';
-import { auth, db } from "../Services/FireBase.js";
+import { auth } from "../Services/FireBase.js";
+import {getUserById} from "../Services/UserService.js"
 import Channel from "../components/channel/Channel.js";
-// import FriendsList from "../components/friendsList/FriendsList.js";
-
+import RoomManagement from "../components/roomManagement/RoomManagement.js";
+import FriendManagement from "../components/friendManagement/FriendManagement.js"
 import io from 'socket.io-client';
+import axios from 'axios'; // Import axios for making HTTP requests
 
 // Set the server URL where Socket.io is running
 const socket = io('http://localhost:5000'); // Replace with your server URL
-
+const backendUrl = 'http://localhost:5000';
 const ChatRoom = () => {
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
-  const [currentChannel, setCurrentChannel] = useState('111'); // Default channel or fetch from somewhere
-
-  const navigate = useNavigate();
-
-  // Grouped state for chat room data (name, userId)
+  const [currentChannel, setCurrentChannel] = useState(''); // Default channel
   const [chatRoomData, setChatRoomData] = useState({
     userName: '',
     userId: '',
   });
-
-  // Fetch messages and update the state when component mounts
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const messagesRef = collection(db, "messages");
-    const q = query(messagesRef, orderBy("createdAt"));
-
-    // Set userId to current authenticated user
-    setChatRoomData((prevData) => ({
-      ...prevData,
-      userId: auth.currentUser.uid,
-    }));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const messagesList = snapshot.docs.map((doc) => doc.data());
-      setMessages(messagesList);
-    });
-
-    return () => unsubscribe(); // Clean up listener on unmount
-  }, [db]);
-
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Establish the socket connection when the component is mounted
+    const fetchUserData = async () => {
+      if (auth.currentUser) {
+        try {
+          // Fetch user data from the backend
+          console.log("get user data")
+          const response = await axios.get(`${backendUrl}/users/${auth.currentUser.uid}`);
+
+        
+          const userData=response.data
+          console.log(userData)
+          // Set user data in state
+          setChatRoomData({
+            userName: userData.userName || 'Anonymous',
+            userId: userData.uid,
+          });
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Establish the socket connection when the component is mounted
+  useEffect(() => {
     socket.on('connect', () => {
       console.log('Connected to the server');
     });
 
-    // Cleanup: disconnect from the socket when the component unmounts
     return () => {
-      // socket.disconnect();
+      // Cleanup: disconnect from the socket when the component unmounts
+      socket.off('connect');
+      socket.off('message');
     };
   }, []);
 
   // Example function to change the channel
   const changeChannel = (newChannel) => {
     setCurrentChannel(newChannel);
-  };
-
-  // Handle sending a message
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-
-    if (!message.trim()) return; // Prevent sending empty messages
-
-    try {
-      const messagesRef = collection(db, "messages");
-      await addDoc(messagesRef, {
-        text: message,
-        createdAt: new Date(),
-        uid: auth.currentUser.uid,
-      });
-      setMessage(""); // Clear the input field
-    } catch (error) {
-      console.error("Error sending message: ", error);
-    }
   };
 
   // Handle user logout
@@ -96,29 +78,12 @@ const ChatRoom = () => {
   return (
     <div>
       <h2>Chat Room</h2>
-      {/* Display user info */}
+
       <UserInfo userName={chatRoomData.userName} userId={chatRoomData.userId} />
-    {/* <FriendsList changeChannel={changeChannel} /> */}
-      <Channel channel={currentChannel} socket={socket} /> 
-      {/* Display chat messages */}
-      <div>
-        {messages.map((msg, index) => (
-          <p key={index}>{msg.text}</p>
-        ))}
-      </div>
+      <FriendManagement userId={chatRoomData.userId}></FriendManagement>
+      <RoomManagement changeChannel={changeChannel}></RoomManagement>
+      <Channel channel={currentChannel} socket={socket} chatRoomData={chatRoomData}/>
 
-      {/* Message input form */}
-      {/* <form onSubmit={handleSendMessage}>
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message"
-        />
-        <button type="submit">Send</button>
-      </form> */}
-
-      {/* Logout button */}
       <button onClick={handleLogout}>Logout</button>
     </div>
   );
