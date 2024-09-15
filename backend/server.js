@@ -4,14 +4,10 @@ const http = require('http');
 const socketIo = require('socket.io');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const MessageData = require('./models/MessageData.js');
 
 const cors = require('cors');
 const app = express();
-mongoose.connect('your_mongodb_uri', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+
 // app.use(cors()); // This will allow all origins by default
 // app.use(cors({ origin: 'http://localhost:3000' }));
 const server = http.createServer(app);
@@ -27,6 +23,7 @@ const io = socketIo(server, {
 app.use(cors());
 app.use(express.static('public'));
 app.use(bodyParser.json());
+app.use(express.json());
 
 // In-memory store for message history by room ID
 const messageHistoryByRoom = {};
@@ -34,6 +31,10 @@ const messageHistoryByRoom = {};
 app.get('/messages/:roomId', (req, res) => {
   const { roomId } = req.params;
   res.json(messageHistoryByRoom[roomId] || []);
+});
+app.get('/test', (req, res) => {
+  
+  res.json("test ok!");
 });
 
 io.on('connection', (socket) => {
