@@ -1,0 +1,22 @@
+.tab-header {
+    display: flex;
+  }
+  
+  .tab-header button {
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    background: lightgray;
+  }
+  
+  .tab-header button.active {
+    background: gray;
+    color: white;
+  }
+  
+  .tab-content {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid lightgray;
+  }
+  

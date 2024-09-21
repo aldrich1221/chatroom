@@ -2,19 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import { createRoom, addUserToRoom, removeUserFromRoom, deleteRoom, getUserRooms } from '../../Services/RoomService';
 import { auth } from '../../Services/FireBase';
-
-const RoomManagement = ({ changeChannel }) => {
+import { ConversationList,Conversation } from "@chatscope/chat-ui-kit-react";
+const RoomManagement = ({ changeChannel ,refreshKey ,setCurrentChannelUsers}) => {
   const [roomName, setRoomName] = useState('');
   const [userId, setUserId] = useState('');
   const [roomId, setRoomId] = useState('');
   const [rooms, setRooms] = useState([]);
+  const [userMapping,setUserMapping]=useState({})
 
   useEffect(() => {
     const fetchUserRooms = async () => {
       if (auth.currentUser) {
         try {
-            console.log("get user romms..",auth.currentUser.uid)
+            // console.log("get user romms..",auth.currentUser.uid)
           const userRooms = await getUserRooms(auth.currentUser.uid);
+          // console.log("Got room",userRooms)
+          var userMapDict = new Map(); // Use Map instead of plain object
+
+          userRooms.forEach(eachroom => {
+            // Check if 'usersNames' exists before trying to loop through it
+            if (eachroom.users) {
+           
+              eachroom.users.forEach((value, key) => {  // Iterate over the Map correctly
+                userMapDict.set(value.uid, value.userName);  // Use set() for Map, and access the 'Name' field
+                
+              });
+            }
+          });
+          console.log(userMapDict)
+          setCurrentChannelUsers(Object.fromEntries(userMapDict)); 
           setRooms(userRooms);
         } catch (error) {
           console.error('Error fetching user rooms:', error);
@@ -23,7 +39,7 @@ const RoomManagement = ({ changeChannel }) => {
     };
 
     fetchUserRooms();
-  }, []);
+  }, [refreshKey]);
 
   const handleCreateRoom = async () => {
     try {
@@ -97,11 +113,13 @@ const RoomManagement = ({ changeChannel }) => {
 
       {/* Display list of rooms */}
       <div>
-        <h3>Rooms</h3>
+       
         <ul>
-          {rooms.map(room => (
-            <li key={room._id} onClick={() => changeChannel(room._id)}>{room._id} {room.name} Users: {room.users}</li>
-          ))}
+          {/* {rooms.map(room => (
+            <li key={room._id} onClick={() => changeChannel(room._id,room.usersName)}>{room._id} {room.name} </li>
+          ))} */}
+
+
         </ul>
       </div>
     </div>

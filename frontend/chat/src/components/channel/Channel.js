@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Channel.css';
-
-const Channel = ({ channel, socket, chatRoomData }) => {
+import styles from "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import {
+  MainContainer,
+  ChatContainer,
+  MessageList,
+  Message,
+  MessageInput,
+} from "@chatscope/chat-ui-kit-react";
+const Channel = ({ channel, socket, chatRoomData ,currentChannelUsers}) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messageEndRef = useRef(null);
-
+  const inputRef = useRef(null);
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -19,11 +26,14 @@ const Channel = ({ channel, socket, chatRoomData }) => {
 
       // Handle incoming message history (loadMessages event)
       const loadMessagesListener = (historyMessages) => {
+        console.log("loadMessagesListener...,",historyMessages)
+        console.log("currentChannelUsers",currentChannelUsers)
         setMessages(historyMessages); // Set the message history from the server
       };
 
       // Handle incoming real-time messages (message event)
       const messageListener = (messageData) => {
+        console.log("messageListener...,",messageData)
         setMessages((prevMessages) => [...prevMessages, messageData]);
       };
 
@@ -39,8 +49,10 @@ const Channel = ({ channel, socket, chatRoomData }) => {
   }, [channel, socket]);
 
   const handleSendMessage = () => {
+    console.log("handleSendMessage")
     if (newMessage.trim()) {
       // Emit message event to the server
+      console.log("handleSendMessage...",chatRoomData.userId ,newMessage,channel)
       socket.emit('message', { roomId: channel, message: newMessage, senderId: chatRoomData.userId });
 
       setNewMessage(''); // Clear the input field
@@ -48,6 +60,7 @@ const Channel = ({ channel, socket, chatRoomData }) => {
   };
 
   const handleKeyPress = (e) => {
+  
     if (e.key === 'Enter') {
       handleSendMessage();
     }
@@ -56,27 +69,40 @@ const Channel = ({ channel, socket, chatRoomData }) => {
   return (
     <div className="chat-room-container">
       <div className="channel-name">Channel: {channel}</div>
-      <div className="message-list">
-        {messages.map((messageData, index) => (
-          <div
-            key={index}
-            className={`message-item ${messageData.senderId === chatRoomData.userId ? 'my-message' : ''}`}
-          >
-            <strong>{messageData.senderId === chatRoomData.userId ? 'Me' : messageData.senderId}:</strong> {messageData.message}
-          </div>
-        ))}
-        <div ref={messageEndRef} />
-      </div>
-      <div className="input-container">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Type a message..."
-        />
-        <button onClick={handleSendMessage}>Send</button>
-      </div>
+
+
+
+<MainContainer>
+  <ChatContainer>
+    <MessageList>
+      {messages.map((messageData, index) => (
+        <div key={index}>
+          {/* Add a fallback if currentChannelUsers or senderId is missing */}
+          {currentChannelUsers && messageData.senderId && currentChannelUsers[messageData.senderId] ? (
+            <strong>{currentChannelUsers[messageData.senderId]}</strong>
+          ) : (
+            <strong>Unknown User</strong>
+          )}
+          <Message
+            model={{
+              message: messageData.message,
+              sentTime: messageData.sentTime,
+              sender: messageData.senderId|| "Unknown",
+              position: 3,
+              direction: messageData.senderId === chatRoomData.userId ? 'outgoing' : 'incoming',
+            }}
+          />
+        </div>
+      ))}
+    </MessageList>
+    <MessageInput 
+      value={newMessage}
+      onChange={(val) => setNewMessage(val)}  // Use (val) => setNewMessage(val) for controlled input
+      onSend={handleSendMessage}
+      placeholder="Type message here" 
+    />
+  </ChatContainer>
+</MainContainer>
     </div>
   );
 };

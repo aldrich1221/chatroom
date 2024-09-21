@@ -9,12 +9,19 @@ router.post('/create', async (req, res) => {
   const { name,userId,userName } = req.body;
 
   try {
+    console.log("creat room",name,userId,userName)
     const user = await User.findOne({ uid:  userId  });
-
-    const newRoom = new Room({ name:name ,users:[userId],usersName:[user.userName]});
+    console.log("Got user",user)
+    
+    const newRoom = new Room({
+      name: name,  // The name of the room
+      users: [{ uid: user.uid, userName: user.userName }]  // Array of users
+    });
+    console.log("new.room",newRoom)
     await newRoom.save();
     res.status(201).json(newRoom);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: 'Error creating room' });
   }
 });
@@ -35,9 +42,13 @@ router.post('/addUser', async (req, res) => {
     console.log("found user",user)
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (!room.users.includes(user.uid)) {
-      room.users.push(user.uid);
-      room.usersName.push(user.userName)
+    console.log()
+    if (!room.users.some(existingUser => existingUser.uid === user.uid)) {
+      room.users.push({ uid: user.uid, userName: user.userName });
+
+      // room.usersMap.set(user.uid,user.userName);
+      // room.usersMap[user.uid] = user.userName;
+
       await room.save();
     }
 
@@ -55,7 +66,8 @@ router.post('/removeUser', async (req, res) => {
     const room = await Room.findById(roomId);
     if (!room) return res.status(404).json({ error: 'Room not found' });
 
-    room.users = room.users.filter(user => user.toString() !== userId);
+    room.users = room.users.filter(user => user.uid.toString() !== userId);
+    // room.usersName.delete(userId);
     await room.save();
     res.json(room);
   } catch (error) {
@@ -81,7 +93,9 @@ router.get('/userRooms/:userId', async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const rooms = await Room.find({ users: { $in: [userId] } });
+    const rooms = await Room.find({
+      users: { $elemMatch: { uid: userId } }
+    });
     console.log("rooms with uid",rooms)
     res.json(rooms);
   } catch (error) {

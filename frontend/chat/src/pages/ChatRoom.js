@@ -7,22 +7,49 @@ import { auth } from "../Services/FireBase.js";
 import {getUserById} from "../Services/UserService.js"
 import Channel from "../components/channel/Channel.js";
 import RoomManagement from "../components/roomManagement/RoomManagement.js";
+import RoomList from "../components/roomManagement/RoomList.js"
 import FriendManagement from "../components/friendManagement/FriendManagement.js"
 import io from 'socket.io-client';
 import axios from 'axios'; // Import axios for making HTTP requests
+
+
+
+
 
 // Set the server URL where Socket.io is running
 const socket = io('http://localhost:5000'); // Replace with your server URL
 const backendUrl = 'http://localhost:5000';
 const ChatRoom = () => {
   const [currentChannel, setCurrentChannel] = useState(''); // Default channel
+  const [currentChannelUsers,setCurrentChannelUsers]=useState([]);
   const [chatRoomData, setChatRoomData] = useState({
     userName: '',
     userId: '',
   });
+
+  const [refreshKey, setRefreshKey] = useState(false);
+  const handleRefreshTrigger = () => {
+    setRefreshKey(prev => !prev); // Toggle the trigger state
+  };
+
   const navigate = useNavigate();
+  const tabs = [
+    {
+      label: 'Tab 1',
+      content: <div>Content for Tab 1</div>,
+    },
+    {
+      label: 'Tab 2',
+      content: <div>Content for Tab 2</div>,
+    },
+    {
+      label: 'Tab 3',
+      content: <div>Content for Tab 3</div>,
+    },
+  ];
 
   useEffect(() => {
+    
     const fetchUserData = async () => {
       if (auth.currentUser) {
         try {
@@ -61,8 +88,9 @@ const ChatRoom = () => {
   }, []);
 
   // Example function to change the channel
-  const changeChannel = (newChannel) => {
+  const changeChannel = (newChannel,users) => {
     setCurrentChannel(newChannel);
+    // setCurrentChannelUsers(users);
   };
 
   // Handle user logout
@@ -80,11 +108,15 @@ const ChatRoom = () => {
       <h2>Chat Room</h2>
 
       <UserInfo userName={chatRoomData.userName} userId={chatRoomData.userId} />
-      <FriendManagement userId={chatRoomData.userId}></FriendManagement>
-      <RoomManagement changeChannel={changeChannel}></RoomManagement>
-      <Channel channel={currentChannel} socket={socket} chatRoomData={chatRoomData}/>
+      
+      <FriendManagement userId={chatRoomData.userId} handleRefreshTrigger={handleRefreshTrigger}></FriendManagement>
+      <RoomManagement changeChannel={changeChannel} refreshKey={refreshKey} setCurrentChannelUsers={setCurrentChannelUsers} ></RoomManagement>
+      <RoomList changeChannel={changeChannel} refreshKey={refreshKey} setCurrentChannelUsers={setCurrentChannelUsers} ></RoomList>
+      <Channel channel={currentChannel} socket={socket} chatRoomData={chatRoomData} currentChannelUsers={currentChannelUsers}/>
 
       <button onClick={handleLogout}>Logout</button>
+
+      
     </div>
   );
 };

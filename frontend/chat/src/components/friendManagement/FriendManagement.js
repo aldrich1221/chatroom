@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { searchUsers,addFriends} from '../../Services/UserService';
 import { createRoom,addUserToRoom} from '../../Services/RoomService';
-const FriendManagement = ({ userId }) => {
+const FriendManagement = ({ userId ,handleRefreshTrigger}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [friendStatus, setFriendStatus] = useState({});
@@ -33,12 +33,17 @@ const FriendManagement = ({ userId }) => {
     try {
         console.log("add friend...",userId,friendId);
       await addFriends (userId,friendId);
+      
       const newRoom =await createRoom("Friend Room",userId);
+      console.log("create  room...",newRoom);
+      // await addUserToRoom(newRoom._id,userId)
       await addUserToRoom(newRoom._id,friendId)
+
       setFriendStatus((prevStatus) => ({
         ...prevStatus,
         [friendId]: 'Friend added!',
       }));
+      handleRefreshTrigger()
     } catch (error) {
       console.error('Error adding friend:', error);
     }
