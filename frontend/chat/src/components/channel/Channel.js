@@ -68,12 +68,12 @@ const Channel = ({ channel, socket, chatRoomData ,currentChannelUsers}) => {
 
   return (
     <div className="chat-room-container">
-      <div className="channel-name">Channel: {channel}</div>
+      {/* <div className="channel-name">Channel: {channel}</div> */}
 
 
 
-<MainContainer>
-  <ChatContainer>
+{/* <MainContainer>
+  <ChatContainer> */}
     <MessageList>
       {messages.map((messageData, index) => (
         <div key={index}>
@@ -101,8 +101,8 @@ const Channel = ({ channel, socket, chatRoomData ,currentChannelUsers}) => {
       onSend={handleSendMessage}
       placeholder="Type message here" 
     />
-  </ChatContainer>
-</MainContainer>
+  {/* </ChatContainer>
+</MainContainer> */}
     </div>
   );
 };
