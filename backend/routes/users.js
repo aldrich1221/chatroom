@@ -54,13 +54,14 @@ router.get('/:uid', async (req, res) => {
 
 // Route to add a friend
 router.post('/addFriend', async (req, res) => {
-  console.log("addFriend");
+ 
   const { userId, friendId } = req.body;
+  console.log("addFriend",userId, friendId);
   try {
     // const user = await User.findById(userId);
-    const user = await User.findOne({userId});
+    const user = await User.findOne({uid:userId});
     // const friend = await User.findById(friendId);
-    const friend  = await User.findOne({friendId});
+    const friend  = await User.findOne({uid:friendId});
     console.log(user,friend)
     if (!user || !friend) {
       return res.status(404).json({ error: 'User not found' });

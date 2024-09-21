@@ -9,7 +9,9 @@ router.post('/create', async (req, res) => {
   const { name,userId,userName } = req.body;
 
   try {
-    const newRoom = new Room({ name:name ,users:[userId],usersName:[userName]});
+    const user = await User.findOne({ uid:  userId  });
+
+    const newRoom = new Room({ name:name ,users:[userId],usersName:[user.userName]});
     await newRoom.save();
     res.status(201).json(newRoom);
   } catch (error) {
