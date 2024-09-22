@@ -18,7 +18,7 @@ const server = http.createServer(app);
 // Set up CORS
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.REACT_URI,
     methods: ["GET", "POST"]
   }
 });
@@ -28,6 +28,10 @@ app.use(cors());
 app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(express.json());
+// Test API route
+app.get('/test-api', (req, res) => {
+  res.json({ message: 'Test API is working!' });
+});
 
 // Connect to MongoDB
 const mongoURI = process.env.MONGO_URI;

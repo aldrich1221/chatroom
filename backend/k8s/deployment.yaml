@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-room-backend-deployment
+  annotations:
+    redeployTimestamp: "2024-09-22T00:00:00Z" 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-room-backend
+  template:
+    metadata:
+      labels:
+        app: chat-room-backend
+    spec:
+      containers:
+      - name: chat-room-backend
+        image: us-central1-docker.pkg.dev/chatroom-85f4d/my-repo/chat-room-backend:latest
+        ports:
+        - containerPort: 5001
