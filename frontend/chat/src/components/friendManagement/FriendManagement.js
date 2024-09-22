@@ -1,35 +1,24 @@
-import React, { useState ,useRef} from 'react';
+import React, { useState } from 'react';
 import { searchUsers, addFriends } from '../../Services/UserService';
 import { createRoom, addUserToRoom } from '../../Services/RoomService';
-import {
-Search
-} from "@chatscope/chat-ui-kit-react";
+import { Grid, Button, TextField, Typography } from '@mui/material';
+
 const FriendManagement = ({ userId, handleRefreshTrigger, friends }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [friendStatus, setFriendStatus] = useState({});
 
-  // const searchRef = useRef<HTMLInputElement>(null);
-  // const setFocus = () => searchRef.current?.focus();
-  const [value, setValue] = useState("please type");
-  // Handle search input change
-  const handleInputChange = (e) => {
-    // setSearchQuery(e.target.value);
-    setValue(e.target.value)
-  };
+  const handleInputChange = (e) => setSearchQuery(e.target.value);
 
-  // Search users by username or email
   const handleSearch = async () => {
     try {
-      console.log(" handleSearch",value)
-      const response = await searchUsers(value);
+      const response = await searchUsers(searchQuery);
       setSearchResults(response.length > 0 ? response : []);
     } catch (error) {
       console.error('Error searching users:', error);
     }
   };
 
-  // Add a friend
   const handleAddFriend = async (friendId) => {
     try {
       await addFriends(userId, friendId);
@@ -47,55 +36,46 @@ const FriendManagement = ({ userId, handleRefreshTrigger, friends }) => {
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto bg-white rounded-xl shadow-md">
-      <hr/>
-      {/* <h2 className="text-2xl font-semibold mb-4">Friends</h2> */}
-      <input
-        type="text"
-        placeholder="Search by username or email"
-        value={value}
-        onChange={handleInputChange}
-        className="border border-gray-300 rounded-md p-2 mb-4 w-full"
-      />
-      <button
-        onClick={handleSearch}
-        className="bg-blue-500 text-white rounded-md p-2 hover:bg-blue-600"
-      >
-        Search
-      </button>
- 
+    <Grid container direction="column" spacing={2}>
+      <Grid item>
+        <TextField
+          fullWidth
+          label="Search by username or email"
+          variant="outlined"
+          value={searchQuery}
+          onChange={handleInputChange}
+        />
+      </Grid>
+      <Grid item>
+        <Button variant="contained" color="primary" onClick={handleSearch}>
+          Search
+        </Button>
+      </Grid>
 
-      <ul className="mt-4">
+      <Grid item>
         {searchResults.map((user) => (
-          <div key={user.uid} className="mt-4">
-            <div className="container">
-              <div className="card shadow-sm">
-                <div className="card-body">
-                  <p className="card-text">
-                    <strong>Name:</strong> {user.userName}
-                  </p>
-                  <p className="card-text">
-                    <strong>Email:</strong> {user.email}
-                  </p>
-                </div>
-                <div className="p-2">
-                  {friends.includes(user.uid) ? (
-                    <p className="bg-green-500 p-2 hover:bg-green-600" >Already Friends</p>
-                  ) : (
-                    <button
-                      onClick={() => handleAddFriend(user.uid)}
-                      className="bg-green-500 text-white rounded-md p-2 hover:bg-green-600"
-                    >
-                      Add Friend
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <Grid container direction="row" alignItems="center" justifyContent="space-between" key={user._id}>
+            <Typography>{user.userName}</Typography>
+           
+            {friends.includes(user.uid) ? (
+              <Button variant="contained" color="primary" disabled>
+                Already Friends
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="success"
+                onClick={() => handleAddFriend(user._id)}
+                disabled={friends.includes(user._id)}
+              >
+                Add Friend
+              </Button>
+            )}
+            {friendStatus[user._id] && <Typography>{friendStatus[user._id]}</Typography>}
+          </Grid>
         ))}
-      </ul>
-    </div>
+      </Grid>
+    </Grid>
   );
 };
 

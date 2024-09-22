@@ -3,7 +3,8 @@
 .chat-room-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: '600';
+    width: '800';
     border: 1px solid #ccc;
     padding: 10px;
   }

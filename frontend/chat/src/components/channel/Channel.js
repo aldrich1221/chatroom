@@ -67,42 +67,52 @@ const Channel = ({ channel, socket, chatRoomData ,currentChannelUsers}) => {
   };
 
   return (
-    <div className="chat-room-container">
-      {/* <div className="channel-name">Channel: {channel}</div> */}
+    // <div >
+      <div className="chat-room-container">
 
 
-
-{/* <MainContainer>
-  <ChatContainer> */}
-    <MessageList>
-      {messages.map((messageData, index) => (
-        <div key={index}>
-          {/* Add a fallback if currentChannelUsers or senderId is missing */}
-          {currentChannelUsers && messageData.senderId && currentChannelUsers[messageData.senderId] ? (
-            <strong>{currentChannelUsers[messageData.senderId]}</strong>
-          ) : (
-            <strong>Unknown User</strong>
-          )}
-          <Message
-            model={{
-              message: messageData.message,
-              sentTime: messageData.sentTime,
-              sender: messageData.senderId|| "Unknown",
-              position: 3,
-              direction: messageData.senderId === chatRoomData.userId ? 'outgoing' : 'incoming',
-            }}
-          />
-        </div>
-      ))}
-    </MessageList>
-    <MessageInput 
-      value={newMessage}
-      onChange={(val) => setNewMessage(val)}  // Use (val) => setNewMessage(val) for controlled input
-      onSend={handleSendMessage}
-      placeholder="Type message here" 
-    />
-  {/* </ChatContainer>
-</MainContainer> */}
+      {/* <ChatContainer  style={{
+    overflowY: 'auto', // Enables vertical scrolling
+    overflowX: 'hidden', // Prevents horizontal scrolling
+    border: '1px solid #ccc', // Optional: adds a border for better visibility
+    padding: '10px', // Optional: adds padding for better layout
+  }}> */}
+  <MessageList
+    style={{
+      flex: 1, // Makes the MessageList grow to occupy the available space
+      overflowY: 'auto', // Enables vertical scrolling
+      overflowX: 'hidden', // Prevents horizontal scrolling
+    }}
+  >
+    {messages.map((messageData, index) => (
+      <div key={index}>
+        {currentChannelUsers && messageData.senderId && currentChannelUsers[messageData.senderId] ? (
+          <strong>{currentChannelUsers[messageData.senderId]}</strong>
+        ) : (
+          <strong></strong>
+        )}
+        <Message
+          model={{
+            message: messageData.message,
+            sentTime: messageData.sentTime,
+            sender: messageData.senderId,
+            position: 3,
+            direction: messageData.senderId === chatRoomData.userId ? 'outgoing' : 'incoming',
+          }}
+        />
+      </div>
+    ))}
+  </MessageList>
+ 
+{/* </ChatContainer> */}
+<br/>
+<MessageInput
+    value={newMessage}
+    onChange={(val) => setNewMessage(val)}
+    onSend={handleSendMessage}
+    placeholder="Type message here"
+  />
+{/* </MainContainer> */} 
     </div>
   );
 };

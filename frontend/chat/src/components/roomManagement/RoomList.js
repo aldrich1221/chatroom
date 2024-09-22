@@ -1,36 +1,32 @@
-// src/components/RoomList.js
 import React, { useState, useEffect } from 'react';
 import { createRoom, addUserToRoom, removeUserFromRoom, deleteRoom, getUserRooms } from '../../Services/RoomService';
 import { auth } from '../../Services/FireBase';
-import { ConversationList,Conversation } from "@chatscope/chat-ui-kit-react";
-const RoomList = ({ changeChannel ,refreshKey ,setCurrentChannelUsers}) => {
+import { ConversationList, Conversation } from "@chatscope/chat-ui-kit-react";
+import { Box, Button, TextField, Typography, Grid } from '@mui/material';
+
+const RoomList = ({ changeChannel, refreshKey, setAllChannelFriends ,setRooms,rooms}) => {
   const [roomName, setRoomName] = useState('');
   const [userId, setUserId] = useState('');
   const [roomId, setRoomId] = useState('');
-  const [rooms, setRooms] = useState([]);
-  const [userMapping,setUserMapping]=useState({})
+  const [userMapping, setUserMapping] = useState({});
 
   useEffect(() => {
     const fetchUserRooms = async () => {
       if (auth.currentUser) {
         try {
-            // console.log("get user romms..",auth.currentUser.uid)
           const userRooms = await getUserRooms(auth.currentUser.uid);
-          // console.log("Got room",userRooms)
-          var userMapDict = new Map(); // Use Map instead of plain object
+          const userMapDict = new Map();
 
-          userRooms.forEach(eachroom => {
-            // Check if 'usersNames' exists before trying to loop through it
+          userRooms.forEach((eachroom) => {
             if (eachroom.users) {
-           
-              eachroom.users.forEach((value, key) => {  // Iterate over the Map correctly
-                userMapDict.set(value.uid, value.userName);  // Use set() for Map, and access the 'Name' field
-                
+              eachroom.users.forEach((value) => {
+                userMapDict.set(value.uid, value.userName);
               });
             }
           });
-          console.log(userMapDict)
-          setCurrentChannelUsers(Object.fromEntries(userMapDict)); 
+
+          setAllChannelFriends(Object.fromEntries(userMapDict));
+      
           setRooms(userRooms);
         } catch (error) {
           console.error('Error fetching user rooms:', error);
@@ -54,7 +50,6 @@ const RoomList = ({ changeChannel ,refreshKey ,setCurrentChannelUsers}) => {
   const handleAddUser = async () => {
     try {
       await addUserToRoom(roomId, userId);
-      // Optionally update the UI or fetch the updated room data
     } catch (error) {
       console.error('Error adding user to room:', error);
     }
@@ -63,7 +58,6 @@ const RoomList = ({ changeChannel ,refreshKey ,setCurrentChannelUsers}) => {
   const handleRemoveUser = async () => {
     try {
       await removeUserFromRoom(roomId, userId);
-      // Optionally update the UI or fetch the updated room data
     } catch (error) {
       console.error('Error removing user from room:', error);
     }
@@ -72,7 +66,7 @@ const RoomList = ({ changeChannel ,refreshKey ,setCurrentChannelUsers}) => {
   const handleDeleteRoom = async () => {
     try {
       await deleteRoom(roomId);
-      setRooms(rooms.filter(room => room._id !== roomId));
+      setRooms(rooms.filter((room) => room._id !== roomId));
       setRoomId('');
     } catch (error) {
       console.error('Error deleting room:', error);
@@ -80,39 +74,87 @@ const RoomList = ({ changeChannel ,refreshKey ,setCurrentChannelUsers}) => {
   };
 
   return (
-    <div>
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Rooms
+      </Typography>
+      <ConversationList
+        style={{
+          height: '340px',
+          overflowY: 'auto',
+        }}
+      >
+        {rooms.map((room) => {
+          const uniqueUserNames = Array.from(new Set(room.users.map((user) => user.userName)));
 
-      {/* Display list of rooms */}
-      <div>
-        <h3>Rooms</h3>
-        <ul>
-          {/* {rooms.map(room => (
-            <li key={room._id} onClick={() => changeChannel(room._id,room.usersName)}>{room._id} {room.name} </li>
-          ))} */}
-<ConversationList
-  style={{
-    height: '340px'
-  }}
->
-{rooms.map(room => {
-  // Create an array of unique user names for each room
-  const uniqueUserNames = Array.from(new Set(room.users.map(user => user.userName)));
+          return (
+            <Conversation
+              key={room._id}
+              info={room._id}
+              lastSenderName="Room ID"
+              name={uniqueUserNames.join(' ')}
+              onClick={() => changeChannel(room._id, room.usersName)}
+            />
+          );
+        })}
+      </ConversationList>
 
-  return (
-    <Conversation
-      key={room._id} // Ensure each Conversation has a unique key
-      info={room._id}
-      lastSenderName="Room Id" // You might want to dynamically set this based on your data
-      name={uniqueUserNames.join(" ")} // Use the unique user names here
-      onClick={() => changeChannel(room._id, room.usersName)} // Make sure `room.usersName` is defined
-    />
-  );
-})}
-</ConversationList>
+      {/* <Grid container spacing={2} sx={{ mt: 2 }}>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Room Name"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
 
-        </ul>
-      </div>
-    </div>
+        <Grid item xs={12}>
+          <Button variant="contained" color="primary" fullWidth onClick={handleCreateRoom}>
+            Create Room
+          </Button>
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="User ID"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Button variant="contained" color="secondary" fullWidth onClick={handleAddUser}>
+            Add User to Room
+          </Button>
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Room ID"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={6}>
+          <Button variant="outlined" color="error" fullWidth onClick={handleRemoveUser}>
+            Remove User
+          </Button>
+        </Grid>
+
+        <Grid item xs={6}>
+          <Button variant="contained" color="error" fullWidth onClick={handleDeleteRoom}>
+            Delete Room
+          </Button>
+        </Grid>
+      </Grid> */}
+    </Box>
   );
 };
 

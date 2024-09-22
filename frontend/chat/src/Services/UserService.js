@@ -1,7 +1,7 @@
 // src/services/roomService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000'; // Replace with your server URL
+const API_URL = process.env.REACT_APP_BACKEND_URL; // Replace with your server URL
 
 
 
